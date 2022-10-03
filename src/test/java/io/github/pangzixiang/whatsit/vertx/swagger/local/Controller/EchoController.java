@@ -1,9 +1,9 @@
 package io.github.pangzixiang.whatsit.vertx.swagger.local.Controller;
 
-import io.github.pangzixiang.whatsit.core.annotation.RestController;
-import io.github.pangzixiang.whatsit.core.context.ApplicationContext;
-import io.github.pangzixiang.whatsit.core.constant.HttpRequestMethod;
-import io.github.pangzixiang.whatsit.core.controller.BaseController;
+import io.github.pangzixiang.whatsit.vertx.core.annotation.RestController;
+import io.github.pangzixiang.whatsit.vertx.core.constant.HttpRequestMethod;
+import io.github.pangzixiang.whatsit.vertx.core.context.ApplicationContext;
+import io.github.pangzixiang.whatsit.vertx.core.controller.BaseController;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;

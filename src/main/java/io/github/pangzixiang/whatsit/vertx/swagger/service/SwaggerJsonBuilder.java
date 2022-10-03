@@ -1,9 +1,9 @@
 package io.github.pangzixiang.whatsit.vertx.swagger.service;
 
-import io.github.pangzixiang.whatsit.core.annotation.RestController;
-import io.github.pangzixiang.whatsit.core.constant.HttpRequestMethod;
-import io.github.pangzixiang.whatsit.core.context.ApplicationContext;
-import io.github.pangzixiang.whatsit.core.controller.BaseController;
+import io.github.pangzixiang.whatsit.vertx.core.annotation.RestController;
+import io.github.pangzixiang.whatsit.vertx.core.constant.HttpRequestMethod;
+import io.github.pangzixiang.whatsit.vertx.core.context.ApplicationContext;
+import io.github.pangzixiang.whatsit.vertx.core.controller.BaseController;
 import io.github.pangzixiang.whatsit.vertx.swagger.controller.SwaggerController;
 import io.github.pangzixiang.whatsit.vertx.swagger.model.SwaggerApiDetail;
 import io.github.pangzixiang.whatsit.vertx.swagger.model.SwaggerJson;
@@ -14,7 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static io.github.pangzixiang.whatsit.core.utils.CoreUtils.refactorControllerPath;
+import static io.github.pangzixiang.whatsit.vertx.core.utils.CoreUtils.refactorControllerPath;
+
 
 @Slf4j
 public class SwaggerJsonBuilder {

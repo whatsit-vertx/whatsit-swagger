@@ -1,9 +1,9 @@
 package io.github.pangzixiang.whatsit.vertx.swagger.local;
 
+import io.github.pangzixiang.whatsit.vertx.core.ApplicationRunner;
+import io.github.pangzixiang.whatsit.vertx.core.context.ApplicationContext;
 import io.github.pangzixiang.whatsit.vertx.swagger.local.Controller.EchoController;
 import io.github.pangzixiang.whatsit.vertx.swagger.controller.SwaggerController;
-import io.github.pangzixiang.whatsit.core.ApplicationRunner;
-import io.github.pangzixiang.whatsit.core.context.ApplicationContext;
 
 public class RunWhatsitSwaggerLocalTest {
     public static void main(String[] args) {

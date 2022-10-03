@@ -1,10 +1,10 @@
 package io.github.pangzixiang.whatsit.vertx.swagger.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.github.pangzixiang.whatsit.core.annotation.RestController;
-import io.github.pangzixiang.whatsit.core.context.ApplicationContext;
-import io.github.pangzixiang.whatsit.core.constant.HttpRequestMethod;
-import io.github.pangzixiang.whatsit.core.controller.BaseController;
+import io.github.pangzixiang.whatsit.vertx.core.annotation.RestController;
+import io.github.pangzixiang.whatsit.vertx.core.constant.HttpRequestMethod;
+import io.github.pangzixiang.whatsit.vertx.core.context.ApplicationContext;
+import io.github.pangzixiang.whatsit.vertx.core.controller.BaseController;
 import io.github.pangzixiang.whatsit.vertx.swagger.model.SwaggerJson;
 import io.github.pangzixiang.whatsit.vertx.swagger.service.SwaggerJsonBuilder;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -16,10 +16,10 @@ import org.webjars.WebJarAssetLocator;
 
 import java.nio.file.Paths;
 
+import static io.github.pangzixiang.whatsit.vertx.core.constant.HttpConstants.CONTENT_TYPE_JSON;
+import static io.github.pangzixiang.whatsit.vertx.core.utils.CoreUtils.objectToString;
 import static io.github.pangzixiang.whatsit.vertx.swagger.constant.SwaggerConstants.*;
-import static io.github.pangzixiang.whatsit.core.constant.HttpConstants.CONTENT_TYPE;
-import static io.github.pangzixiang.whatsit.core.constant.HttpConstants.CONTENT_TYPE_JSON;
-import static io.github.pangzixiang.whatsit.core.utils.CoreUtils.objectToString;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static java.util.Objects.requireNonNullElse;
 
 @Slf4j
