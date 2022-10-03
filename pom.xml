@@ -24,7 +24,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <whatsit-core.version>1.0.0</whatsit-core.version>
+        <whatsit-core.version>1.0.3</whatsit-core.version>
         <swagger-ui.version>4.14.0</swagger-ui.version>
         <swagger-annotations.version>2.0.0-rc2</swagger-annotations.version>
         <webjars-locator.version>0.52</webjars-locator.version>
@@ -44,7 +44,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.github.pangzixiang.whatsit</groupId>
+            <groupId>io.github.pangzixiang.whatsit.vertx</groupId>
             <artifactId>whatsit-core</artifactId>
             <version>${whatsit-core.version}</version>
         </dependency>
