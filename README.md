@@ -16,7 +16,6 @@ import io.github.pangzixiang.whatsit.vertx.core.ApplicationContext;
 
 public class RunWhatsitSwaggerLocalTest {
     public static void main(String[] args) {
-        System.setProperty("whatsit.env", "local");
         ApplicationContext applicationContext = new ApplicationContext();
         applicationContext.registerController(SwaggerController.class, EchoController.class);
         ApplicationRunner applicationRunner = new ApplicationRunner(applicationContext);

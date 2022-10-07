@@ -24,8 +24,8 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <whatsit-core.version>1.0.3</whatsit-core.version>
-        <swagger-ui.version>4.14.0</swagger-ui.version>
+        <whatsit-core.version>1.0.9</whatsit-core.version>
+        <swagger-ui.version>4.14.2</swagger-ui.version>
         <swagger-annotations.version>2.0.0-rc2</swagger-annotations.version>
         <webjars-locator.version>0.52</webjars-locator.version>
         <lombok.version>1.18.24</lombok.version>
