@@ -16,14 +16,4 @@ public class SwaggerApiDetail {
     private List<Parameter> parameters;
     private Map<String, Object> responses;
     private List<Map<String, Object>> security;
-
-    @Data
-    public static class Parameter {
-        private String name;
-        private String in;
-        private String description;
-        private boolean required;
-        private String type;
-        private String format;
-    }
 }
