@@ -1,7 +1,7 @@
 package io.github.pangzixiang.whatsit.vertx.swagger.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.pangzixiang.whatsit.vertx.core.annotation.RestController;
+import io.github.pangzixiang.whatsit.vertx.core.annotation.RestEndpoint;
 import io.github.pangzixiang.whatsit.vertx.core.constant.HttpRequestMethod;
 import io.github.pangzixiang.whatsit.vertx.core.context.ApplicationContext;
 import io.github.pangzixiang.whatsit.vertx.core.controller.BaseController;
@@ -9,6 +9,7 @@ import io.github.pangzixiang.whatsit.vertx.swagger.model.SwaggerJson;
 import io.github.pangzixiang.whatsit.vertx.swagger.service.SwaggerJsonBuilder;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.StaticHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -20,38 +21,38 @@ import static io.github.pangzixiang.whatsit.vertx.core.constant.HttpConstants.CO
 import static io.github.pangzixiang.whatsit.vertx.core.utils.CoreUtils.objectToString;
 import static io.github.pangzixiang.whatsit.vertx.swagger.constant.SwaggerConstants.*;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static java.util.Objects.requireNonNullElse;
 
 @Slf4j
+@RestController
 public class SwaggerController extends BaseController {
     private final WebJarAssetLocator locator = new WebJarAssetLocator();
 
     private final SwaggerJson swaggerJson;
 
-    private final String baseUrl = requireNonNullElse(getApplicationContext().getApplicationConfiguration().getString(SWAGGER_BASEURL), DEFAULT.SWAGGER_BASEURL);
+    private final String baseUrl = ApplicationContext.getApplicationContext().getApplicationConfiguration().getString(SWAGGER_BASEURL);
 
-    public SwaggerController(ApplicationContext applicationContext) {
-        super(applicationContext);
-        SwaggerJsonBuilder builder = new SwaggerJsonBuilder(applicationContext);
+    public SwaggerController(Router router) {
+        super(router);
+        SwaggerJsonBuilder builder = new SwaggerJsonBuilder();
         this.swaggerJson = builder.build();
-
     }
 
-    @RestController(path = SWAGGER_JSON_URL, method = HttpRequestMethod.GET)
+    @Override
+    public void start() throws Exception {
+        super.start();
+        getRouter()
+                .get(baseUrl + "/*")
+                .handler(StaticHandler.create(Paths.get(locator.getFullPath(SWAGGER_UI, INDEX)).getParent().toString()));
+    }
+
+    @RestEndpoint(path = SWAGGER_JSON_URL, method = HttpRequestMethod.GET)
     public void swaggerJson(RoutingContext routingContext) {
-        try {
-            routingContext.response()
-                    .putHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
-                    .end(objectToString(this.swaggerJson));
-        } catch (JsonProcessingException e) {
-            routingContext.response()
-                    .putHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
-                    .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                    .end();
-        }
+        routingContext.response()
+                .putHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
+                .end(objectToString(this.swaggerJson));
     }
 
-    @RestController(path = SWAGGER_CONFIG_URL, method = HttpRequestMethod.GET)
+    @RestEndpoint(path = SWAGGER_CONFIG_URL, method = HttpRequestMethod.GET)
     public void config(RoutingContext routingContext) {
         JsonObject configJson = new JsonObject();
         configJson.put(URL, baseUrl + "/swagger.json");
@@ -60,17 +61,16 @@ public class SwaggerController extends BaseController {
                 .end(configJson.encode());
     }
 
-    @RestController(path = SWAGGER_INITIALIZER_JS_URL, method = HttpRequestMethod.GET)
-    public void aInitJS(RoutingContext routingContext) {
-        routingContext.response()
-                .putHeader(CONTENT_TYPE, CONTENT_TYPE_JAVASCRIPT)
-                .end(String.format(SWAGGER_INITIALIZER_JS, baseUrl + "/swagger-config"));
-    }
-
-    @RestController(path = SWAGGER_STATIC_URL, method = HttpRequestMethod.GET)
-    public StaticHandler zIndex() {
-        return StaticHandler.create(
-                Paths.get(locator.getFullPath(SWAGGER_UI, INDEX)).getParent().toString()
-        );
+    @RestEndpoint(path = SWAGGER_INITIALIZER_JS_URL, method = HttpRequestMethod.GET)
+    public void initJS(RoutingContext routingContext) {
+        getVertx().fileSystem()
+                .readFile("swagger-initializer.js")
+                .onSuccess(buffer ->
+                        routingContext.response()
+                                .putHeader(CONTENT_TYPE, CONTENT_TYPE_JAVASCRIPT)
+                                .end(String.format(buffer.toString(), baseUrl + "/swagger-config")))
+                .onFailure(throwable ->
+                        sendJsonResponse(routingContext, HttpResponseStatus.NOT_FOUND, "swagger-initializer.js not found!")
+                );
     }
 }

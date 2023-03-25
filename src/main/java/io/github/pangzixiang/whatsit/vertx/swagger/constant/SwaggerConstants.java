@@ -11,8 +11,6 @@ public class SwaggerConstants {
 
     public static final String SWAGGER_INITIALIZER_JS_URL = "{swagger.baseUrl}/swagger-initializer.js";
 
-    public static final String SWAGGER_STATIC_URL = "{swagger.baseUrl}/*";
-
     public static final String SWAGGER_UI = "swagger-ui";
 
     public static final String INDEX = "index.html";
@@ -22,15 +20,6 @@ public class SwaggerConstants {
     public static final String URL = "url";
 
     public static final String SWAGGER_BASEURL = "swagger.baseUrl";
-
-    public static class DEFAULT {
-
-        private DEFAULT() {
-            super();
-        }
-
-        public static final String SWAGGER_BASEURL = "/swagger/v0";
-    }
 
     public static final String SWAGGER_INITIALIZER_JS = """
             window.onload = function () {
@@ -50,8 +39,6 @@ public class SwaggerConstants {
                     //Overwrite the config
                     configUrl: "%s"
                 });
-                        
-                //</editor-fold>
             };
             """;
 }
