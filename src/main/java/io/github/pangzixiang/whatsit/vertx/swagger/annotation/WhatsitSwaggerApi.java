@@ -13,4 +13,7 @@ public @interface WhatsitSwaggerApi {
     String[] tags() default {};
     String operationId() default "";
     QueryParameter[] queryParams() default {};
+    Class<?> requestBodyClass() default Class.class;
+    Class<?> responseClass() default Class.class;
+    SecuritySchema[] securitySchema() default {};
 }

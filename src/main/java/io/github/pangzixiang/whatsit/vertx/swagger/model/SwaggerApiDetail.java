@@ -2,6 +2,7 @@ package io.github.pangzixiang.whatsit.vertx.swagger.model;
 
 import lombok.Data;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,5 +16,9 @@ public class SwaggerApiDetail {
     private List<String> produces;
     private List<Parameter> parameters;
     private Map<String, Object> responses;
-    private List<Map<String, Object>> security;
+    private final List<Map<String, List<String>>> security = new LinkedList<>();
+
+    public void addSecurity(Map<String, List<String>> security) {
+        this.security.add(security);
+    }
 }

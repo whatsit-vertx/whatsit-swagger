@@ -4,11 +4,16 @@ import io.github.pangzixiang.whatsit.vertx.core.annotation.RestController;
 import io.github.pangzixiang.whatsit.vertx.core.annotation.RestEndpoint;
 import io.github.pangzixiang.whatsit.vertx.core.constant.HttpRequestMethod;
 import io.github.pangzixiang.whatsit.vertx.core.controller.BaseController;
+import io.github.pangzixiang.whatsit.vertx.core.model.HttpResponse;
 import io.github.pangzixiang.whatsit.vertx.swagger.annotation.QueryParameter;
+import io.github.pangzixiang.whatsit.vertx.swagger.annotation.SecuritySchema;
 import io.github.pangzixiang.whatsit.vertx.swagger.annotation.WhatsitSwaggerApi;
+import io.github.pangzixiang.whatsit.vertx.swagger.constant.SecuritySchemaType;
+import io.github.pangzixiang.whatsit.vertx.swagger.local.pojo.PostRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -24,6 +29,12 @@ public class EchoController extends BaseController {
         super(router);
     }
 
+    @Override
+    public void start() throws Exception {
+        getRouter().route().handler(BodyHandler.create());
+        super.start();
+    }
+
     @WhatsitSwaggerApi(tags = {"A", "B"}, description = "test echo Test desc", summary = "test echo Test", operationId = "test")
     @RestEndpoint(path = "/echoTest", method = HttpRequestMethod.GET)
     public void echoTest(RoutingContext routingContext) {
@@ -34,7 +45,9 @@ public class EchoController extends BaseController {
     @WhatsitSwaggerApi(tags = "C",
             description = "test echo Test path desc",
             summary = "test echo path Test",
-            operationId = "test")
+            operationId = "test",
+            responseClass = HttpResponse.class
+    )
     @RestEndpoint(path = "/path/:path", method = HttpRequestMethod.GET)
     public void echoTestPath(RoutingContext routingContext) {
         log.info("Echo Controller handle request! {}", routingContext.pathParam("path"));
@@ -51,11 +64,13 @@ public class EchoController extends BaseController {
         sendJsonResponse(routingContext, HttpResponseStatus.OK, "echo");
     }
 
-    @WhatsitSwaggerApi(tags = "C",
+    @WhatsitSwaggerApi(tags = "E",
             description = "test echo Test desc",
             summary = "test echo Test",
             operationId = "test",
-            queryParams = @QueryParameter(name = "test", description = "test", required = true))
+            queryParams = @QueryParameter(name = "test", description = "test", required = true),
+            securitySchema = @SecuritySchema(name = "Authorization", type = SecuritySchemaType.API_KEY)
+    )
     @RestEndpoint(path = "/query", method = HttpRequestMethod.GET)
     public void queryParam(RoutingContext routingContext) {
         log.info("Echo Controller handle request! {}", routingContext.queryParams().get("test"));
@@ -74,10 +89,10 @@ public class EchoController extends BaseController {
         sendJsonResponse(routingContext, HttpResponseStatus.OK, "ok");
     }
 
-    @WhatsitSwaggerApi(tags = "B")
+    @WhatsitSwaggerApi(tags = "D", requestBodyClass = PostRequest.class, responseClass = HttpResponse.class)
     @RestEndpoint(path = "/post/test", method = HttpRequestMethod.POST)
     public void postTest(RoutingContext routingContext) {
-        log.info(routingContext.body().asString());
+        log.info(routingContext.body().asPojo(PostRequest.class).toString());
         sendJsonResponse(routingContext, HttpResponseStatus.OK, "post done");
     }
 }

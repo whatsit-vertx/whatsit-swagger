@@ -40,6 +40,7 @@
         <maven-javadoc-plugin>3.4.1</maven-javadoc-plugin>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
         <jackson.version>2.15.0-rc1</jackson.version>
+        <jsonschema-generator.version>4.29.0</jsonschema-generator.version>
     </properties>
 
     <dependencies>
@@ -76,6 +77,12 @@
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.victools</groupId>
+            <artifactId>jsonschema-generator</artifactId>
+            <version>${jsonschema-generator.version}</version>
         </dependency>
 
         <dependency>
