@@ -5,9 +5,11 @@ import io.github.pangzixiang.whatsit.vertx.core.annotation.RestEndpoint;
 import io.github.pangzixiang.whatsit.vertx.core.constant.HttpRequestMethod;
 import io.github.pangzixiang.whatsit.vertx.core.controller.BaseController;
 import io.github.pangzixiang.whatsit.vertx.core.model.HttpResponse;
-import io.github.pangzixiang.whatsit.vertx.swagger.annotation.QueryParameter;
+import io.github.pangzixiang.whatsit.vertx.swagger.annotation.ParameterAnnotation;
 import io.github.pangzixiang.whatsit.vertx.swagger.annotation.SecuritySchema;
 import io.github.pangzixiang.whatsit.vertx.swagger.annotation.WhatsitSwaggerApi;
+import io.github.pangzixiang.whatsit.vertx.swagger.constant.ParameterIn;
+import io.github.pangzixiang.whatsit.vertx.swagger.constant.ParameterType;
 import io.github.pangzixiang.whatsit.vertx.swagger.constant.SecuritySchemaType;
 import io.github.pangzixiang.whatsit.vertx.swagger.local.pojo.PostRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -68,7 +70,7 @@ public class EchoController extends BaseController {
             description = "test echo Test desc",
             summary = "test echo Test",
             operationId = "test",
-            queryParams = @QueryParameter(name = "test", description = "test", required = true),
+            params = @ParameterAnnotation(name = "test", description = "test", required = true),
             securitySchema = @SecuritySchema(name = "Authorization", type = SecuritySchemaType.API_KEY)
     )
     @RestEndpoint(path = "/query", method = HttpRequestMethod.GET)
@@ -93,6 +95,13 @@ public class EchoController extends BaseController {
     @RestEndpoint(path = "/post/test", method = HttpRequestMethod.POST)
     public void postTest(RoutingContext routingContext) {
         log.info(routingContext.body().asPojo(PostRequest.class).toString());
+        sendJsonResponse(routingContext, HttpResponseStatus.OK, "post done");
+    }
+
+    @WhatsitSwaggerApi(tags = "F", responseClass = HttpResponse.class, params = @ParameterAnnotation(required = true, name = "test", type = ParameterType.STRING, in = ParameterIn.FORM_DATA))
+    @RestEndpoint(path = "/post/test/form", method = HttpRequestMethod.POST)
+    public void postFormTest(RoutingContext routingContext) {
+        log.info(routingContext.request().formAttributes().toString());
         sendJsonResponse(routingContext, HttpResponseStatus.OK, "post done");
     }
 }

@@ -19,7 +19,6 @@ import org.webjars.WebJarAssetLocator;
 import java.nio.file.Paths;
 
 import static io.github.pangzixiang.whatsit.vertx.core.constant.HttpConstants.CONTENT_TYPE_JSON;
-import static io.github.pangzixiang.whatsit.vertx.core.utils.CoreUtils.objectToString;
 import static io.github.pangzixiang.whatsit.vertx.swagger.constant.SwaggerConstants.*;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
