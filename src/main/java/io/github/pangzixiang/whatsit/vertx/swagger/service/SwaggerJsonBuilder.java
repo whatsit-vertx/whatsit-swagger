@@ -1,5 +1,6 @@
 package io.github.pangzixiang.whatsit.vertx.swagger.service;
 
+import com.github.victools.jsonschema.generator.*;
 import io.github.pangzixiang.whatsit.vertx.core.annotation.RestController;
 import io.github.pangzixiang.whatsit.vertx.core.annotation.RestEndpoint;
 import io.github.pangzixiang.whatsit.vertx.core.config.ApplicationConfiguration;
@@ -8,7 +9,9 @@ import io.github.pangzixiang.whatsit.vertx.core.context.ApplicationContext;
 import io.github.pangzixiang.whatsit.vertx.core.controller.BaseController;
 import io.github.pangzixiang.whatsit.vertx.core.utils.AutoClassLoader;
 import io.github.pangzixiang.whatsit.vertx.swagger.annotation.QueryParameter;
+import io.github.pangzixiang.whatsit.vertx.swagger.annotation.SecuritySchema;
 import io.github.pangzixiang.whatsit.vertx.swagger.annotation.WhatsitSwaggerApi;
+import io.github.pangzixiang.whatsit.vertx.swagger.constant.SecuritySchemaFlow;
 import io.github.pangzixiang.whatsit.vertx.swagger.controller.SwaggerController;
 import io.github.pangzixiang.whatsit.vertx.swagger.model.Info;
 import io.github.pangzixiang.whatsit.vertx.swagger.model.Parameter;
@@ -28,6 +31,7 @@ import static io.github.pangzixiang.whatsit.vertx.core.utils.CoreUtils.refactorC
 @Slf4j
 public class SwaggerJsonBuilder {
     private final ApplicationConfiguration applicationConfiguration = ApplicationContext.getApplicationContext().getApplicationConfiguration();
+
     public SwaggerJson build() {
         SwaggerJson json = new SwaggerJson();
         json.setHost("localhost:" + this.applicationConfiguration.getPort());
@@ -40,6 +44,9 @@ public class SwaggerJsonBuilder {
 
         List<Class<?>> controllers =
                 AutoClassLoader.getClassesByCustomFilter(clz -> clz.isAnnotationPresent(RestController.class) && BaseController.class.isAssignableFrom(clz));
+
+        Set<Class<?>> definitionsClasses = new HashSet<>();
+
         controllers.stream()
                 .filter(clz -> !clz.equals(SwaggerController.class))
                 .forEach(clz -> {
@@ -62,6 +69,17 @@ public class SwaggerJsonBuilder {
 
                                 WhatsitSwaggerApi whatsitSwaggerApi = endpoint.getAnnotation(WhatsitSwaggerApi.class);
                                 if (whatsitSwaggerApi != null) {
+
+                                    if (whatsitSwaggerApi.requestBodyClass() != Class.class) {
+                                        definitionsClasses.add(whatsitSwaggerApi.requestBodyClass());
+                                        String clzName = whatsitSwaggerApi.requestBodyClass().getSimpleName();
+                                        parameters.add(bodyParameter(clzName));
+                                    }
+
+                                    if (whatsitSwaggerApi.responseClass() != Class.class) {
+                                        definitionsClasses.add(whatsitSwaggerApi.responseClass());
+                                    }
+
                                     sub.setTags(whatsitSwaggerApi.tags().length > 0 ?
                                             Arrays.asList(whatsitSwaggerApi.tags()) : List.of(clz.getSimpleName()));
                                     sub.setSummary(StringUtils.isNotBlank(whatsitSwaggerApi.summary()) ?
@@ -72,7 +90,7 @@ public class SwaggerJsonBuilder {
                                             whatsitSwaggerApi.operationId() : endpoint.getName());
 
                                     QueryParameter[] queryParameters = whatsitSwaggerApi.queryParams();
-                                    for (QueryParameter queryParameter: queryParameters) {
+                                    for (QueryParameter queryParameter : queryParameters) {
                                         Parameter parameter = new Parameter();
                                         parameter.setRequired(queryParameter.required());
                                         parameter.setType(queryParameter.type());
@@ -81,6 +99,30 @@ public class SwaggerJsonBuilder {
                                         parameter.setDescription(queryParameter.description());
                                         parameter.setIn(queryParameter.in());
                                         parameters.add(parameter);
+                                    }
+
+                                    if (whatsitSwaggerApi.securitySchema().length > 0) {
+                                        SecuritySchema securitySchema = whatsitSwaggerApi.securitySchema()[0];
+                                        JsonObject securitySchemaJsonObject = new JsonObject();
+                                        securitySchemaJsonObject.put("type", securitySchema.type().getValue());
+                                        securitySchemaJsonObject.put("description", securitySchema.description());
+                                        securitySchemaJsonObject.put("name", securitySchema.name());
+                                        securitySchemaJsonObject.put("in", securitySchema.in().getValue());
+                                        securitySchemaJsonObject.put("flow", securitySchema.flow().getValue());
+                                        if ((securitySchema.flow().equals(SecuritySchemaFlow.ACCESS_CODE) ||
+                                                securitySchema.flow().equals(SecuritySchemaFlow.IMPLICIT)) &&
+                                                StringUtils.isNotBlank(securitySchema.authorizationUrl())) {
+                                            securitySchemaJsonObject.put("authorizationUrl", securitySchema.authorizationUrl());
+                                        }
+                                        if ((securitySchema.flow().equals(SecuritySchemaFlow.ACCESS_CODE) ||
+                                                securitySchema.flow().equals(SecuritySchemaFlow.APPLICATION) ||
+                                                securitySchema.flow().equals(SecuritySchemaFlow.PASSWORD)) &&
+                                                StringUtils.isNotBlank(securitySchema.tokenUrl())
+                                        ) {
+                                            securitySchemaJsonObject.put("tokenUrl", securitySchema.tokenUrl());
+                                        }
+                                        json.addSecurityDefinitions(securitySchema.name(), securitySchemaJsonObject);
+                                        sub.addSecurity(Map.of(securitySchema.name(), List.of()));
                                     }
                                 } else {
                                     sub.setTags(List.of(clz.getSimpleName()));
@@ -91,7 +133,7 @@ public class SwaggerJsonBuilder {
 
                                 if (path.contains(":")) {
                                     String[] temp = path.split("/");
-                                    for (String tempParam: temp) {
+                                    for (String tempParam : temp) {
                                         if (tempParam.contains(":")) {
                                             Parameter parameter = new Parameter();
                                             parameter.setName(tempParam.substring(1));
@@ -104,12 +146,8 @@ public class SwaggerJsonBuilder {
                                     }
                                 }
 
-                                if (restEndpoint.method().name().toUpperCase(Locale.ROOT).equals(HttpRequestMethod.POST.name())) {
-                                    parameters.add(bodyParameter());
-                                }
-
                                 sub.setParameters(parameters);
-                                sub.setResponses(responses());
+                                sub.setResponses(responses(whatsitSwaggerApi));
 
                                 // Details
                                 details.put(restEndpoint.method().name().toLowerCase(Locale.ROOT), sub);
@@ -119,30 +157,43 @@ public class SwaggerJsonBuilder {
                             });
                 });
 
+        SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
+        SchemaGeneratorConfig config = configBuilder.build();
+        SchemaGenerator generator = new SchemaGenerator(config);
+
+        definitionsClasses.forEach(clz -> {
+            json.addDefinitions(clz.getSimpleName(), generator.generateSchema(clz));
+        });
+
         return json;
     }
 
-    private Parameter bodyParameter() {
-        Parameter body = new Parameter();
-        body.setIn("body");
-        body.setName("body");
-        body.setDescription("body");
-        body.setRequired(false);
-        return body;
+    private Parameter bodyParameter(String bodyClzName) {
+        Parameter parameter = new Parameter();
+        parameter.setIn("body");
+        parameter.setName("body");
+        parameter.setDescription("%s object that needs to be sent".formatted(bodyClzName));
+        parameter.setRequired(true);
+        parameter.setSchema(new JsonObject().put("$ref", "#/definitions/" + bodyClzName));
+        return parameter;
     }
 
-    private Map<String, Object> responses() {
+    private Map<String, Object> responses(WhatsitSwaggerApi whatsitSwaggerApi) {
         Map<String, Object> responses = new HashMap<>();
-        responses.put(String.valueOf(HttpResponseStatus.OK.code()),
-                new JsonObject().put("description", HttpResponseStatus.OK.reasonPhrase()).getMap());
-        responses.put(String.valueOf(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()),
-                new JsonObject().put("description", HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).getMap());
-        responses.put(String.valueOf(HttpResponseStatus.BAD_REQUEST.code()),
-                new JsonObject().put("description", HttpResponseStatus.BAD_REQUEST.reasonPhrase()).getMap());
-        responses.put(String.valueOf(HttpResponseStatus.UNAUTHORIZED.code()),
-                new JsonObject().put("description", HttpResponseStatus.UNAUTHORIZED.reasonPhrase()).getMap());
-        responses.put(String.valueOf(HttpResponseStatus.NOT_FOUND.code()),
-                new JsonObject().put("description", HttpResponseStatus.NOT_FOUND.reasonPhrase()).getMap());
+        JsonObject responseJsonObject = new JsonObject();
+        responseJsonObject.put("description", HttpResponseStatus.OK.reasonPhrase());
+        if (whatsitSwaggerApi != null && whatsitSwaggerApi.responseClass() != Class.class) {
+            responseJsonObject.put("schema", new JsonObject().put("$ref", "#/definitions/" + whatsitSwaggerApi.responseClass().getSimpleName()));
+        }
+        responses.put(String.valueOf(HttpResponseStatus.OK.code()), responseJsonObject);
+//        responses.put(String.valueOf(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()),
+//                new JsonObject().put("description", HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase()).getMap());
+//        responses.put(String.valueOf(HttpResponseStatus.BAD_REQUEST.code()),
+//                new JsonObject().put("description", HttpResponseStatus.BAD_REQUEST.reasonPhrase()).getMap());
+//        responses.put(String.valueOf(HttpResponseStatus.UNAUTHORIZED.code()),
+//                new JsonObject().put("description", HttpResponseStatus.UNAUTHORIZED.reasonPhrase()).getMap());
+//        responses.put(String.valueOf(HttpResponseStatus.NOT_FOUND.code()),
+//                new JsonObject().put("description", HttpResponseStatus.NOT_FOUND.reasonPhrase()).getMap());
         return responses;
     }
 }

@@ -8,6 +8,7 @@ import io.github.pangzixiang.whatsit.vertx.core.controller.BaseController;
 import io.github.pangzixiang.whatsit.vertx.swagger.model.SwaggerJson;
 import io.github.pangzixiang.whatsit.vertx.swagger.service.SwaggerJsonBuilder;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -49,7 +50,7 @@ public class SwaggerController extends BaseController {
     public void swaggerJson(RoutingContext routingContext) {
         routingContext.response()
                 .putHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
-                .end(objectToString(this.swaggerJson));
+                .end(Json.encode(this.swaggerJson));
     }
 
     @RestEndpoint(path = SWAGGER_CONFIG_URL, method = HttpRequestMethod.GET)
