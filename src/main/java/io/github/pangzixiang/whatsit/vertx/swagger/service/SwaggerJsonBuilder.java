@@ -4,11 +4,10 @@ import com.github.victools.jsonschema.generator.*;
 import io.github.pangzixiang.whatsit.vertx.core.annotation.RestController;
 import io.github.pangzixiang.whatsit.vertx.core.annotation.RestEndpoint;
 import io.github.pangzixiang.whatsit.vertx.core.config.ApplicationConfiguration;
-import io.github.pangzixiang.whatsit.vertx.core.constant.HttpRequestMethod;
 import io.github.pangzixiang.whatsit.vertx.core.context.ApplicationContext;
 import io.github.pangzixiang.whatsit.vertx.core.controller.BaseController;
 import io.github.pangzixiang.whatsit.vertx.core.utils.AutoClassLoader;
-import io.github.pangzixiang.whatsit.vertx.swagger.annotation.QueryParameter;
+import io.github.pangzixiang.whatsit.vertx.swagger.annotation.ParameterAnnotation;
 import io.github.pangzixiang.whatsit.vertx.swagger.annotation.SecuritySchema;
 import io.github.pangzixiang.whatsit.vertx.swagger.annotation.WhatsitSwaggerApi;
 import io.github.pangzixiang.whatsit.vertx.swagger.constant.SecuritySchemaFlow;
@@ -31,6 +30,14 @@ import static io.github.pangzixiang.whatsit.vertx.core.utils.CoreUtils.refactorC
 @Slf4j
 public class SwaggerJsonBuilder {
     private final ApplicationConfiguration applicationConfiguration = ApplicationContext.getApplicationContext().getApplicationConfiguration();
+
+    private final SchemaGenerator generator;
+
+    public SwaggerJsonBuilder() {
+        SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
+        SchemaGeneratorConfig config = configBuilder.build();
+        this.generator = new SchemaGenerator(config);
+    }
 
     public SwaggerJson build() {
         SwaggerJson json = new SwaggerJson();
@@ -89,20 +96,20 @@ public class SwaggerJsonBuilder {
                                     sub.setOperationId(StringUtils.isNotBlank(whatsitSwaggerApi.operationId()) ?
                                             whatsitSwaggerApi.operationId() : endpoint.getName());
 
-                                    QueryParameter[] queryParameters = whatsitSwaggerApi.queryParams();
-                                    for (QueryParameter queryParameter : queryParameters) {
+                                    ParameterAnnotation[] queryParameterAnnotations = whatsitSwaggerApi.params();
+                                    for (ParameterAnnotation queryParameterAnnotation : queryParameterAnnotations) {
                                         Parameter parameter = new Parameter();
-                                        parameter.setRequired(queryParameter.required());
-                                        parameter.setType(queryParameter.type());
-                                        parameter.setFormat(queryParameter.format());
-                                        parameter.setName(queryParameter.name());
-                                        parameter.setDescription(queryParameter.description());
-                                        parameter.setIn(queryParameter.in());
+                                        parameter.setRequired(queryParameterAnnotation.required());
+                                        parameter.setType(queryParameterAnnotation.type().getValue());
+                                        parameter.setFormat(queryParameterAnnotation.format());
+                                        parameter.setName(queryParameterAnnotation.name());
+                                        parameter.setDescription(queryParameterAnnotation.description());
+                                        parameter.setIn(queryParameterAnnotation.in().getValue());
                                         parameters.add(parameter);
                                     }
 
-                                    if (whatsitSwaggerApi.securitySchema().length > 0) {
-                                        SecuritySchema securitySchema = whatsitSwaggerApi.securitySchema()[0];
+                                    SecuritySchema securitySchema = whatsitSwaggerApi.securitySchema();
+                                    if (securitySchema != null && StringUtils.isNotBlank(securitySchema.name())) {
                                         JsonObject securitySchemaJsonObject = new JsonObject();
                                         securitySchemaJsonObject.put("type", securitySchema.type().getValue());
                                         securitySchemaJsonObject.put("description", securitySchema.description());
@@ -156,10 +163,6 @@ public class SwaggerJsonBuilder {
                                 json.addPath(path, details);
                             });
                 });
-
-        SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-        SchemaGeneratorConfig config = configBuilder.build();
-        SchemaGenerator generator = new SchemaGenerator(config);
 
         definitionsClasses.forEach(clz -> {
             json.addDefinitions(clz.getSimpleName(), generator.generateSchema(clz));
